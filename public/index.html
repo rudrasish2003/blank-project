@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Agentic AI MVP Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1>Agentic AI — Predictive Maintenance & Scheduling</h1>
+    <p>Master Agent orchestrating analysis, diagnosis, voice engagement, scheduling, feedback, and manufacturing insights. UEBA enforced.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Fleet Status</h2>
+      <div class="actions">
+        <button id="refreshFleet">Refresh</button>
+        <button id="simulate">Simulate Telemetry (selected vehicles)</button>
+      </div>
+      <div id="fleet" class="grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Upcoming Bookings</h2>
+      <div id="bookings" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Manufacturing Insights (RCA/CAPA)</h2>
+      <div class="actions">
+        <button id="refreshInsights">Refresh</button>
+      </div>
+      <div id="insights" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>UEBA Audit Log</h2>
+      <div class="actions">
+        <button id="refreshUEBA">Refresh</button>
+      </div>
+      <div id="ueba" class="list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>© Agentic AI MVP</small>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

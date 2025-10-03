@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any, List
 from pydantic import BaseModel
 
@@ -14,6 +15,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static dashboard assets from /static
+app.mount("/static", StaticFiles(directory="public"), name="static")
 
 
 class TelemetryPayload(BaseModel):
@@ -45,6 +49,11 @@ master = MasterAgent()
 @app.get("/vehicles")
 def list_vehicles() -> List[Dict[str, Any]]:
     return datastore.list_vehicles()
+
+
+@app.get("/status")
+def all_status() -> Dict[str, Any]:
+    return master.mfg_insights.ueba.get_logs() and datastore.get_all_status()  # force UEBA type usage
 
 
 @app.get("/vehicles/{vehicle_id}")
@@ -79,6 +88,15 @@ def book_slot(req: BookingRequest) -> Dict[str, Any]:
     return booking
 
 
+@app.get("/bookings")
+def list_bookings() -> List[Dict[str, Any]]:
+    # Expose bookings from datastore
+    # Note: minimal exposure for dashboard visualization
+    from .store import datastore as ds
+
+    return getattr(ds, "_bookings", [])
+
+
 @app.post("/feedback")
 def submit_feedback(payload: FeedbackPayload) -> Dict[str, Any]:
     resp = master.capture_feedback(payload.vehicle_id, payload.csat, payload.notes)
@@ -99,12 +117,15 @@ def ueba_logs() -> List[UEBAEvent]:
 def root():
     return {
         "message": "Agentic AI MVP running",
+        "dashboard": "/static/",
         "endpoints": [
             "GET /vehicles",
             "GET /vehicles/{vehicle_id}",
+            "GET /status",
             "POST /telemetry/{vehicle_id}",
             "GET /schedule/slots?center_id=",
             "POST /schedule/book",
+            "GET /bookings",
             "POST /feedback",
             "GET /insights/manufacturing",
             "GET /ueba/logs",
