@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
 from .orchestration.master import MasterAgent, UEBAEvent
@@ -53,7 +53,7 @@ def list_vehicles() -> List[Dict[str, Any]]:
 
 @app.get("/status")
 def all_status() -> Dict[str, Any]:
-    return master.mfg_insights.ueba.get_logs() and datastore.get_all_status()  # force UEBA type usage
+    return datastore.get_all_status()
 
 
 @app.get("/vehicles/{vehicle_id}")
@@ -66,11 +66,13 @@ def vehicle_status(vehicle_id: str) -> Dict[str, Any]:
 
 
 @app.post("/telemetry/{vehicle_id}")
-def ingest_telemetry(vehicle_id: str, payload: TelemetryPayload) -> Dict[str, Any]:
+def ingest_telemetry(vehicle_id: str, payload: TelemetryPayload, x_actor: Optional[str] = Header(None, alias="X-Actor")) -> Dict[str, Any]:
     if not datastore.get_vehicle(vehicle_id):
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
+    master.set_subject(x_actor or "dashboard")
     result = master.process_telematics(vehicle_id, payload.model_dump())
+    master.set_subject("system")
     return result
 
 
@@ -81,8 +83,10 @@ def get_slots(center_id: str) -> Dict[str, Any]:
 
 
 @app.post("/schedule/book")
-def book_slot(req: BookingRequest) -> Dict[str, Any]:
+def book_slot(req: BookingRequest, x_actor: Optional[str] = Header(None, alias="X-Actor")) -> Dict[str, Any]:
+    master.set_subject(x_actor or "dashboard")
     booking = master.book_slot(req.vehicle_id, req.center_id, req.slot)
+    master.set_subject("system")
     if not booking["ok"]:
         raise HTTPException(status_code=400, detail=booking["error"])
     return booking
@@ -98,14 +102,24 @@ def list_bookings() -> List[Dict[str, Any]]:
 
 
 @app.post("/feedback")
-def submit_feedback(payload: FeedbackPayload) -> Dict[str, Any]:
+def submit_feedback(payload: FeedbackPayload, x_actor: Optional[str] = Header(None, alias="X-Actor")) -> Dict[str, Any]:
+    master.set_subject(x_actor or "dashboard")
     resp = master.capture_feedback(payload.vehicle_id, payload.csat, payload.notes)
+    master.set_subject("system")
     return resp
 
 
 @app.get("/insights/manufacturing")
-def manufacturing_insights() -> Dict[str, Any]:
-    return master.generate_manufacturing_insights()
+def manufacturing_insights(x_actor: Optional[str] = Header(None, alias="X-Actor")) -> Dict[str, Any]:
+    master.set_subject(x_actor or "dashboard")
+    resp = master.generate_manufacturing_insights()
+    master.set_subject("system")
+    return resp
+
+
+@app.get("/forecast/centers")
+def forecast_centers() -> Dict[str, Any]:
+    return master.forecast_centers()
 
 
 @app.get("/ueba/logs")
@@ -128,6 +142,7 @@ def root():
             "GET /bookings",
             "POST /feedback",
             "GET /insights/manufacturing",
+            "GET /forecast/centers",
             "GET /ueba/logs",
         ],
     }

@@ -3,9 +3,9 @@
 This MVP implements a web-based Agentic AI with a Master Agent orchestrating Worker Agents for:
 - Continuous monitoring and predictive failure detection
 - Demand forecasting (simplified via usage heuristics) and autonomous scheduling
-- Persuasive customer engagement (voice script simulation)
+- Persuasive customer engagement (voice script simulation + browser TTS)
 - RCA/CAPA insights generation and manufacturing feedback loop
-- UEBA security to detect anomalous agent actions
+- UEBA security to detect anomalous agent actions with actor context
 
 ## Quick Start
 
@@ -21,7 +21,10 @@ pip install -r requirements.txt
 python scripts/run_server.py
 ```
 
-3) In another terminal, simulate telemetry streaming:
+3) Open the dashboard:
+- http://localhost:8000/static/
+
+4) (Optional) Simulate telemetry streaming via script:
 ```
 python scripts/simulate_telematics.py
 ```
@@ -30,7 +33,7 @@ python scripts/simulate_telematics.py
 
 - GET /             — Service info
 - GET /vehicles     — List 10 synthetic vehicles
-- GET /vehicles/{id} — Vehicle + latest status (analysis/diagnosis)
+- GET /status       — Latest per-vehicle analysis/diagnosis
 - POST /telemetry/{id} — Ingest telemetry; Master Agent orchestrates analysis, diagnosis, customer pitch, and slot suggestions
 - GET /schedule/slots?center_id=BLR_IND — Mock available slots
 - POST /schedule/book — Book a slot
@@ -41,13 +44,15 @@ python scripts/simulate_telematics.py
     "slot": "2025-10-05T10:30:00"
   }
   ```
+- GET /bookings — Show booked appointments
 - POST /feedback — Record CSAT and notes post-service
+- GET /forecast/centers — Demand forecast per center (near/medium/low term)
 - GET /insights/manufacturing — RCA/CAPA-driven insights from latest predictions
-- GET /ueba/logs — UEBA audit log of agent actions and anomalies
+- GET /ueba/logs — UEBA audit log of agent actions and anomalies (with subject)
 
 ## Architecture Overview
 
-- app/orchestration/master.py — MasterAgent + UEBA policy
+- app/orchestration/master.py — MasterAgent + UEBA policy + actor context
 - app/agents/* — Worker agents:
   - DataAnalysisAgent — feature engineering + anomaly score
   - DiagnosisAgent — component risk + priority/ETA
@@ -55,8 +60,16 @@ python scripts/simulate_telematics.py
   - CustomerEngagementAgent — voice script + notification text
   - FeedbackAgent — records CSAT and notes
   - ManufacturingInsightsAgent — correlates predictions with CAPA/RCA
+  - DemandForecastingAgent — lightweight per-center demand heuristic
 - app/store/datastore.py — In-memory store backed by data/*.json
 - data/*.json — Synthetic vehicles, maintenance history, and sample CAPA/RCA
+- public/ — Static dashboard (index.html, styles.css, app.js) with:
+  - Fleet risk view
+  - Voice script playback (Web Speech API)
+  - Center demand forecasts
+  - Bookings list
+  - Manufacturing insights
+  - UEBA logs (shows subject/actor)
 - scripts/run_server.py — Start FastAPI with uvicorn
 - scripts/simulate_telematics.py — Send synthetic telemetry to the API
 
@@ -73,7 +86,8 @@ If an agent attempts an unauthorized action, UEBA logs:
   "agent": "SchedulingAgent",
   "action": "read_telematics",
   "ok": false,
-  "reason": "anomalous action"
+  "reason": "anomalous action",
+  "subject": "dashboard"
 }
 ```
 
@@ -81,4 +95,4 @@ If an agent attempts an unauthorized action, UEBA logs:
 
 - The MVP uses light-weight heuristics for anomaly scoring and diagnosis to keep it fast and dependency-light.
 - Extend DataAnalysisAgent/DiagnosisAgent with ML as needed (e.g., Gradient Boosting + survival analysis).
-- A web UI can be added later (React/Vue/Svelte) to visualize fleet risk, bookings, and insights.
+- The dashboard uses browser SpeechSynthesis for voice script playback; on some systems, voice may vary.

@@ -1,7 +1,8 @@
 const API = "http://localhost:8000";
 
-async function fetchJSON(url, opts) {
-  const r = await fetch(url, opts);
+async function fetchJSON(url, opts = {}) {
+  const headers = { ...(opts.headers || {}), "X-Actor": "dashboard" };
+  const r = await fetch(url, { ...opts, headers });
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
@@ -15,6 +16,18 @@ function el(tag, attrs = {}, children = []) {
   });
   children.forEach((c) => e.appendChild(c));
   return e;
+}
+
+function speak(lines = []) {
+  try {
+    const utterance = new SpeechSynthesisUtterance(lines.join("\n"));
+    utterance.lang = "en-IN";
+    utterance.rate = 1.0;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.warn("Speech synthesis unavailable", e);
+  }
 }
 
 function fleetCard(v, status) {
@@ -44,7 +57,8 @@ function fleetCard(v, status) {
       ]),
       el("div", { class: "col" }, [
         el("p", { class: "subhead" }, [document.createTextNode("Voice Agent Script")]),
-        el("ul", {}, pitch.map((line) => el("li", {}, [document.createTextNode(line)])))
+        el("ul", {}, pitch.map((line) => el("li", {}, [document.createTextNode(line)]))),
+        el("button", { class: "speak" }, [document.createTextNode("Play Voice Script")])
       ])
     ]),
     el("div", { class: "row" }, [
@@ -54,6 +68,9 @@ function fleetCard(v, status) {
       ])
     ])
   ]);
+
+  // Voice TTS
+  card.querySelector("button.speak").addEventListener("click", () => speak(pitch));
 
   // Booking handlers
   card.querySelectorAll("button.slot").forEach((btn) => {
@@ -150,7 +167,27 @@ async function renderUEBA() {
   logs.slice(-25).reverse().forEach((l) => {
     container.appendChild(
       el("div", { class: `item ${l.ok ? "" : "warn"}` }, [
-        document.createTextNode(`${new Date(l.ts).toLocaleString()} — ${l.agent} :: ${l.action} (${l.ok ? "ok" : "blocked"})`)
+        document.createTextNode(`${new Date(l.ts).toLocaleString()} — [${l.subject}] ${l.agent} :: ${l.action} (${l.ok ? "ok" : "blocked"})`)
+      ])
+    );
+  });
+}
+
+async function renderForecast() {
+  const container = document.getElementById("forecast");
+  const data = await fetchJSON(`${API}/forecast/centers`);
+  container.innerHTML = "";
+  if (!data.ok) {
+    container.appendChild(el("div", { class: "item warn" }, [document.createTextNode(`Forecast blocked by UEBA`)]));
+    return;
+  }
+  data.centers.forEach((c) => {
+    container.appendChild(
+      el("div", { class: "item" }, [
+        el("strong", {}, [document.createTextNode(c.center_id)]),
+        document.createTextNode(
+          ` — near-term: ${c.near_term}, medium: ${c.medium_term}, low: ${c.low_term} (as of ${new Date(c.generated_at).toLocaleString()})`
+        )
       ])
     );
   });
@@ -161,11 +198,13 @@ function wireEvents() {
   document.getElementById("simulate").addEventListener("click", simulateTelemetry);
   document.getElementById("refreshInsights").addEventListener("click", renderInsights);
   document.getElementById("refreshUEBA").addEventListener("click", renderUEBA);
+  document.getElementById("refreshForecast").addEventListener("click", renderForecast);
 }
 
 async function init() {
   wireEvents();
   await renderFleet();
+  await renderForecast();
   await renderBookings();
   await renderInsights();
   await renderUEBA();

@@ -1,5 +1,5 @@
-from dataclasses import dataclass, asdict
-from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+from typing import Dict, Any, List
 from datetime import datetime
 
 from ..agents.data_analysis import DataAnalysisAgent
@@ -8,6 +8,7 @@ from ..agents.scheduling import SchedulingAgent
 from ..agents.customer_engagement import CustomerEngagementAgent
 from ..agents.feedback import FeedbackAgent
 from ..agents.manufacturing_insights import ManufacturingInsightsAgent
+from ..agents.demand_forecasting import DemandForecastingAgent
 from ..store import datastore
 
 
@@ -18,6 +19,7 @@ class UEBAEvent:
     action: str
     ok: bool
     reason: str
+    subject: str  # actor or role (e.g., dashboard, api_client)
 
 
 class UEBA:
@@ -33,6 +35,10 @@ class UEBA:
             "ManufacturingInsightsAgent": {"generate_insights"},
         }
         self._logs: List[UEBAEvent] = []
+        self._subject: str = "system"
+
+    def set_subject(self, subject: str):
+        self._subject = subject or "system"
 
     def check(self, agent: str, action: str) -> bool:
         ok = action in self.policy.get(agent, set())
@@ -43,6 +49,7 @@ class UEBA:
                 action=action,
                 ok=ok,
                 reason="allowed" if ok else "anomalous action",
+                subject=self._subject,
             )
         )
         return ok
@@ -60,6 +67,10 @@ class MasterAgent:
         self.customer = CustomerEngagementAgent(self.ueba)
         self.feedback = FeedbackAgent(self.ueba)
         self.mfg_insights = ManufacturingInsightsAgent(self.ueba)
+        self.forecasting = DemandForecastingAgent(self.ueba)
+
+    def set_subject(self, subject: str):
+        self.ueba.set_subject(subject)
 
     def get_vehicle_status(self, vehicle_id: str) -> Dict[str, Any]:
         return datastore.get_status(vehicle_id)
@@ -78,7 +89,7 @@ class MasterAgent:
         datastore.update_status(vehicle_id, {"analysis": analysis, "diagnosis": diagnosis})
 
         # 3) Decide engagement/scheduling threshold
-        if diagnosis["priority"] in ("High", "Medium"):
+        if diagnosis.get("priority") in ("High", "Medium"):
             convo = self.customer.compose_pitch(vehicle_id, diagnosis)
             suggestion = self.scheduling.propose_slots(vehicle_id, diagnosis)
             result = {
@@ -106,3 +117,6 @@ class MasterAgent:
         # Combine latest diagnostics + historical CAPA/RCA to produce insights
         latest = datastore.get_all_status()
         return self.mfg_insights.generate(latest)
+
+    def forecast_centers(self) -> Dict[str, Any]:
+        return self.forecasting.forecast()
