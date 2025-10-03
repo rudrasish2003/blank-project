@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
+from pathlib import Path
 
 from .orchestration.master import MasterAgent, UEBAEvent
 from .store import datastore
@@ -16,8 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static dashboard assets from /static
-app.mount("/static", StaticFiles(directory="public"), name="static")
+# Serve static dashboard assets from /static using absolute path and html index
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PUBLIC_DIR = PROJECT_ROOT / "public"
+app.mount("/static", StaticFiles(directory=str(PUBLIC_DIR), html=True), name="static")
 
 
 class TelemetryPayload(BaseModel):
