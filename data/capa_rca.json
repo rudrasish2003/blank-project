@@ -1,0 +1,20 @@
+[
+  {
+    "component": "brake_system",
+    "issue": "Accelerated pad wear in humid metros",
+    "capa": "Revise resin compound; update QC humidity soak test",
+    "rca": "Compound sensitivity to moisture"
+  },
+  {
+    "component": "battery_pack",
+    "issue": "Voltage imbalance under high duty cycles",
+    "capa": "Firmware update for charge balancing; supplier batch review",
+    "rca": "Cell variability in batch B47"
+  },
+  {
+    "component": "cooling_system",
+    "issue": "Overheating in hill traffic",
+    "capa": "Thermostat design tweak; increase inspection interval",
+    "rca": "Thermostat hysteresis wider than spec"
+  }
+]
