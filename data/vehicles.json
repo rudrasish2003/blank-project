@@ -1,0 +1,12 @@
+{
+  "VHC-01": {"id": "VHC-01", "owner": "Ananya", "city": "BLR", "model": "Hatchback X1"},
+  "VHC-02": {"id": "VHC-02", "owner": "Ravi", "city": "BLR", "model": "Sedan S2"},
+  "VHC-03": {"id": "VHC-03", "owner": "Meera", "city": "MUM", "model": "SUV Z3"},
+  "VHC-04": {"id": "VHC-04", "owner": "Arjun", "city": "DEL", "model": "Sedan S2"},
+  "VHC-05": {"id": "VHC-05", "owner": "Neha", "city": "MUM", "model": "Hatchback X1"},
+  "VHC-06": {"id": "VHC-06", "owner": "Kabir", "city": "DEL", "model": "SUV Z3"},
+  "VHC-07": {"id": "VHC-07", "owner": "Sanya", "city": "BLR", "model": "Sedan S2"},
+  "VHC-08": {"id": "VHC-08", "owner": "Amit", "city": "MUM", "model": "SUV Z3"},
+  "VHC-09": {"id": "VHC-09", "owner": "Isha", "city": "DEL", "model": "Hatchback X1"},
+  "VHC-10": {"id": "VHC-10", "owner": "Rohit", "city": "BLR", "model": "SUV Z3"}
+}

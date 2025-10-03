@@ -1,0 +1,12 @@
+[
+  {"vehicle_id": "VHC-01", "date": "2024-06-10", "service": "Brake inspection", "notes": "Pad wear 0.3"},
+  {"vehicle_id": "VHC-02", "date": "2024-05-22", "service": "Battery check", "notes": "Voltage 12.4V"},
+  {"vehicle_id": "VHC-03", "date": "2024-07-12", "service": "Coolant flush", "notes": "Thermostat replaced"},
+  {"vehicle_id": "VHC-04", "date": "2024-08-03", "service": "General service", "notes": "All OK"},
+  {"vehicle_id": "VHC-05", "date": "2024-06-19", "service": "Brake pad replacement", "notes": "High wear"},
+  {"vehicle_id": "VHC-06", "date": "2024-07-25", "service": "Suspension check", "notes": "Minor vibration"},
+  {"vehicle_id": "VHC-07", "date": "2024-08-14", "service": "Battery replacement", "notes": "Old pack degraded"},
+  {"vehicle_id": "VHC-08", "date": "2024-05-02", "service": "Brake inspection", "notes": "Pad wear 0.5"},
+  {"vehicle_id": "VHC-09", "date": "2024-07-30", "service": "Coolant check", "notes": "High temp in traffic"},
+  {"vehicle_id": "VHC-10", "date": "2024-06-07", "service": "General service", "notes": "All OK"}
+]
